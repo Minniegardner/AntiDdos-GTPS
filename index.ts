@@ -1,87 +1,78 @@
-import * as http from "http";
 import fs = require("fs");
 
 const blacklist: Map<string, number> = new Map();
-const packet: string = "server|168.144.45.104\nport|17091\ntype|1\nloginurl|login-page-blond.vercel.app\n#maint|Server currently change hosting, please join discord.gg/mcps to get the latest host.\nbeta_server|127.0.0.1\nbeta_port|17091\nbeta_type|1\nmeta|localhost\nRTENDMARKERBS1001";
+
+const packet: string =
+"server|168.144.45.104\nport|17091\ntype|1\nloginurl|login-page-blond.vercel.app\n#maint|Server currently change hosting, please join discord.gg/mcps to get the latest host.\nbeta_server|127.0.0.1\nbeta_port|17091\nbeta_type|1\nmeta|localhost\nRTENDMARKERBS1001";
+
 const files: Map<string, Buffer> = new Map();
 
-for (let file of fs.readdirSync(`${__dirname}/assets`)) {
-    if (!file.endsWith(".rrtex")) continue;
-    files.set(file, fs.readFileSync(`${__dirname}/assets/${file}`));
-};
+if (fs.existsSync("./assets")) {
+    for (let file of fs.readdirSync("./assets")) {
+        if (!file.endsWith(".rrtex")) continue;
+
+        files.set(file, fs.readFileSync(`./assets/${file}`));
+    }
+}
 
 const timeout: number = 10000;
 
 function add_address(address: string) {
-    blacklist.set(address, Date.now() + 10000);
+    blacklist.set(address, Date.now() + timeout);
 }
 
-let server = http.createServer(function(req, res) {
-    let url = req.url.split("/growtopia/")[1];  
-    if (url && url.startsWith("server_data.php") && req.method.toLowerCase() === "post") {
-        console.log(`Connection from: ${req.connection.remoteAddress}`);
-        if (!blacklist.has(req.connection.remoteAddress + req.url)) {
-            console.log(`${req.connection.remoteAddress} is now the in the blacklist for ${timeout / 1000} seconds. at route: ${req.url}`)
-            add_address(req.connection.remoteAddress + req.url)
+export default function handler(req: any, res: any) {
+    let url = req.url.split("/growtopia/")[1];
+
+    const ip =
+        req.headers["x-forwarded-for"] ||
+        req.socket?.remoteAddress ||
+        "unknown";
+
+    // SERVER DATA
+    if (
+        url &&
+        url.startsWith("server_data.php") &&
+        req.method.toLowerCase() === "post"
+    ) {
+
+        if (!blacklist.has(ip + req.url)) {
+            add_address(ip + req.url);
         } else {
-            let not_allowed = blacklist.get(req.connection.remoteAddress + req.url);
-            if (Date.now() > not_allowed) {
-                console.log(`Timeout done for: ${req.connection.remoteAddress}`);
-                blacklist.delete(req.connection.remoteAddress + req.url);
-            } else {
-                console.log(`Connection blocked: ${req.connection.remoteAddress}`);
-                return req.connection.destroy();
+            let not_allowed = blacklist.get(ip + req.url);
+
+            if (Date.now() < not_allowed!) {
+                return res.status(429).send("blocked");
             }
+
+            blacklist.delete(ip + req.url);
         }
 
-        console.log(`Entered correct route: ${req.connection.remoteAddress}`);
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.write(packet, (err) => {
-            if (err)
-                console.log(err);
-
-            res.end();
-            res.destroy();
-        });
-    } else if (url && files.has(url.replace(/\//g, "")) && req.method.toLowerCase() === "get") {
-        console.log(`Connection from: ${req.connection.remoteAddress}`);
-        if (!blacklist.has(req.connection.remoteAddress + req.url)) {
-            console.log(`${req.connection.remoteAddress} is now the in the blacklist for ${timeout / 1000} seconds. at route: ${req.url}`)
-            add_address(req.connection.remoteAddress + req.url)
-        } else {
-            let not_allowed = blacklist.get(req.connection.remoteAddress + req.url);
-            if (Date.now() > not_allowed) {
-                console.log(`Timeout done for: ${req.connection.remoteAddress}`);
-                blacklist.delete(req.connection.remoteAddress + req.url);
-            } else {
-                console.log(`Connection blocked: ${req.connection.remoteAddress}`);
-                return req.connection.destroy();
-            }
-        }
-
-        // rrtex file exist
-        res.writeHead(200, {
-            'Content-Type': 'application/octet-stream',
-            "Content-Disposition": "attachment; filename=" + !url.endsWith(".rrtex") ? url + ".rrtex" : url
-        });
-
-        res.write(files.get(url), (err) => {
-            if (err)
-                console.log(err);
-
-            res.end();
-            res.destroy();
-        });
-    } else {
-        console.log(`Connection blocked: ${req.connection.remoteAddress}`);
-        res.destroy();
+        res.setHeader("Content-Type", "text/plain");
+        return res.status(200).send(packet);
     }
-});
 
-server.listen(80);
+    // RRTEX
+    else if (
+        url &&
+        files.has(url.replace(/\//g, "")) &&
+        req.method.toLowerCase() === "get"
+    ) {
 
-server.on("connection", (socket) => {
-    
-});
+        const clean = url.replace(/\//g, "");
 
-server.on("listening", () => console.log("HTTP Server now up."));
+        res.setHeader(
+            "Content-Type",
+            "application/octet-stream"
+        );
+
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename=${clean}`
+        );
+
+        return res.status(200).send(files.get(clean));
+    }
+
+    return res.status(403).send("forbidden");
+}
