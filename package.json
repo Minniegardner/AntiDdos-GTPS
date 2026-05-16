@@ -1,0 +1,9 @@
+{
+  "name": "gtps-http",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "license": "MIT",
+  "dependencies": {
+    "@vercel/node": "^3.2.26"
+  }
+}
