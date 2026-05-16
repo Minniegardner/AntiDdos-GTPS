@@ -2,7 +2,7 @@ import * as http from "http";
 import fs = require("fs");
 
 const blacklist: Map<string, number> = new Map();
-const packet: string = "server|127.0.0.1\nport|17091\ntype|1\n#maint|Mainetrance message (Not used for now) -- NodeJS-GTPS\n\nbeta_server|127.0.0.1\nbeta_port|17091\n\nbeta_type|1\nmeta|localhost\nRTENDMARKERBS1001";
+const packet: string = "server|168.144.45.104\nport|17091\ntype|1\nloginurl|login-page-blond.vercel.app\n#maint|Server currently change hosting, please join discord.gg/mcps to get the latest host.\nbeta_server|127.0.0.1\nbeta_port|17091\nbeta_type|1\nmeta|localhost\nRTENDMARKERBS1001";
 const files: Map<string, Buffer> = new Map();
 
 for (let file of fs.readdirSync(`${__dirname}/assets`)) {
