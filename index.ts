@@ -3,7 +3,7 @@ import fs = require("fs");
 const blacklist: Map<string, number> = new Map();
 
 const packet: string =
-"server|178.128.105.208\nport|17091\ntype|1\nloginurl|login-page-blond.vercel.app\n#maint|Server currently change hosting, please join discord.gg/mcps to get the latest host.\nbeta_server|127.0.0.1\nbeta_port|17091\nbeta_type|1\nmeta|localhost\nRTENDMARKERBS1001";
+"server|152.42.212.100\nport|18500\ntype|1\ntype2|1\nloginurl|login-page-blond.vercel.app\n#maint|Server currently change hosting, please join discord.gg/mcps to get the latest host.\nbeta_server|127.0.0.1\nbeta_port|17091\nbeta_type|1\nmeta|localhost\nRTENDMARKERBS1001";
 
 const files: Map<string, Buffer> = new Map();
 
